@@ -1,0 +1,98 @@
+syntax = "proto3";
+option go_package = "../raftkv";
+package raftkv;
+
+message State {
+    int32 term = 1;
+    bool isLeader = 2; 
+}
+
+message KeyValue {
+    string key = 1; 
+    string value = 2;
+    int64 ClientId = 3;   // changed
+    int64 RequestId = 4;  // changed
+}
+
+message GetKey {            // added new message
+    string key = 1;
+    int64 ClientId = 2;
+    int64 RequestId = 3;
+}
+
+message Reply {
+    bool wrongLeader = 1;   // added new message
+    string error = 2;
+    string value = 3;
+}
+
+message IntegerArg {
+    int32 arg = 1;
+}
+
+message StringArg {
+    string arg = 1;
+}
+
+message Empty {}
+
+message GenericResponse {
+    bool success = 1;
+}
+
+message RequestVoteRequest {
+    int32 term = 1;
+    int32 candidateId = 2;
+    int32 lastLogIndex = 3;
+    int32 lastLogTerm = 4;
+}
+
+message RequestVoteResponse {
+    int32 term = 1;
+    bool voteGranted = 2;
+}
+
+message Entry {
+    int32 term = 1;
+    string key = 2;
+    string value = 3;
+}
+
+message AppendEntriesRequest {
+    int32 term = 1;
+    int32 leaderId = 2;
+    int32 prevLogIndex = 3;
+    int32 prevLogTerm = 4;
+    repeated Entry entries = 5;
+    int32 leaderCommit = 6;
+}
+
+message AppendEntriesResponse {
+    int32 term = 1;
+    bool success = 2;
+}
+/* service Server {
+    rpc getState(Empty) returns (State);
+    rpc get(IntegerArg) returns (KeyValue);
+    rpc put(KeyValue) returns (Empty);
+    rpc ping(Empty) returns (Empty);
+    rpc requestVote(RequestVoteRequest) returns (RequestVoteResponse);
+    rpc appendEntries(AppendEntriesRequest) returns (AppendEntriesResponse);
+} */
+  
+service KeyValueStore {                         // added new service
+    rpc GetState(Empty) returns (State);
+    rpc Get(StringArg) returns (KeyValue);
+    rpc Put(KeyValue) returns (GenericResponse);
+    rpc ping(Empty) returns (GenericResponse);
+    rpc requestVote(RequestVoteRequest) returns (RequestVoteResponse);
+    rpc appendEntries(AppendEntriesRequest) returns (AppendEntriesResponse);
+}
+
+service FrontEnd {                              // added new service
+    rpc Get(GetKey) returns (Reply);
+    rpc Put(KeyValue) returns (Reply);
+    rpc Replace(KeyValue) returns (Reply);
+    rpc StartRaft(IntegerArg) returns (Reply);
+    rpc StartServer(IntegerArg) returns (Reply);
+}
